@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISHE Office OS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #0F172A;
+  --secondary: #1E293B;
+  --accent: #3B82F6;
+  --accent-hover: #2563EB;
+  --text: #F1F5F9;
+  --text-dim: #94A3B8;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Login */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  z-index: 1000;
+}
+
+.login-screen.hidden { display: none; }
+
+.login-box {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 400px;
+}
+
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  margin-bottom: 1.25rem;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.938rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 0.875rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-btn:hover {
+  background: var(--accent-hover);
+}
+
+.error-msg {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #FCA5A5;
+  font-size: 0.875rem;
+  text-align: center;
+  display: none;
+}
+
+/* App */
+.app {
+  display: none;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.app.active { display: block; }
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding: 1.25rem 1.75rem;
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+}
+
+.app-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logout-btn {
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #FCA5A5;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* Isometric Building */
+.building-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  perspective: 1200px;
+}
+
+.building {
+  transform-style: preserve-3d;
+  transform: rotateX(15deg) rotateY(-15deg);
+  transition: transform 0.8s ease;
+}
+
+.floor {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  margin-bottom: 10px;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.floor:hover {
+  transform: translateZ(20px) scale(1.02);
+}
+
+.floor-face {
+  position: absolute;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(30, 41, 59, 0.7));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.floor-front {
+  width: 100%;
+  height: 100%;
+  transform: translateZ(50px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.floor-top {
+  width: 100%;
+  height: 100px;
+  transform: rotateX(90deg) translateZ(90px);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
+}
+
+.floor-right {
+  width: 100px;
+  height: 100%;
+  transform: rotateY(90deg) translateZ(calc(100% - 50px));
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.6));
+}
+
+.floor-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.floor-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.4));
+}
+
+.floor-info h3 {
+  font-size: 1.5rem;
+  color: #3B82F6;
+  margin-bottom: 0.5rem;
+}
+
+.floor-info p {
+  color: var(--text-dim);
+  font-size: 0.938rem;
+}
+
+.voice-badge {
+  margin-top: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 20px;
+  font-size: 0.813rem;
+  display: inline-block;
+}
+
+/* Voice Button */
+.voice-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+  transition: all 0.3s;
+  z-index: 100;
+}
+
+.voice-btn:hover {
+  transform: scale(1.1);
+}
+
+.voice-btn.listening {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 15px 50px rgba(59, 130, 246, 0.8); }
+}
+
+/* Animations */
+.floor {
+  animation: slideIn 0.6s ease-out backwards;
+}
+
+.floor:nth-child(1) { animation-delay: 0.1s; }
+.floor:nth-child(2) { animation-delay: 0.2s; }
+.floor:nth-child(3) { animation-delay: 0.3s; }
+.floor:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1 class="login-title">ISHE OFFICE OS</h1>
+    <p class="login-subtitle">Voice-Enabled Headquarters</p>
+    
+    <form id="loginForm" onsubmit="login(event)">
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input type="email" class="input-field" id="email" value="ian@ishe-ltd.co.uk">
+      </div>
+      
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <input type="password" class="input-field" id="pass" value="225Bs119Ej">
+      </div>
+      
+      <button type="submit" class="login-btn">Enter Office</button>
+      <div class="error-msg" id="error">Invalid credentials</div>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="app-header">
+    <div class="app-logo">ISHE OFFICE OS</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </header>
+  
+  <div class="building-container">
+    <div class="building" id="building"></div>
+  </div>
+  
+  <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+</div>
+
+<script>
+const AUTH = {email: 'ian@ishe-ltd.co.uk', pass: '225Bs119Ej'};
+const OLLAMA = 'http://37.27.48.177:11434';
+const FLOORS = [
+  {icon: '🖥️', title: 'IT INFRASTRUCTURE', subtitle: 'Geoff Hazel • IT Manager', worker: {name: 'Geoff Hazel', role: 'IT Manager', model: 'qwen2.5-coder:7b', personality: 'Technical expert, monitors systems 24/7'}},
+  {icon: '💰', title: 'FINANCE', subtitle: 'Phil Jones • Finance Manager', worker: {name: 'Phil Jones', role: 'Finance Manager', model: 'qwen2.5-coder:7b', personality: 'Methodical accountant, detail-oriented'}},
+  {icon: '⚙️', title: 'OPERATIONS', subtitle: 'Operations Manager', worker: {name: 'Operations Manager', role: 'Process Automation', model: 'llama3.2:3b', personality: 'Efficient, organized'}},
+  {icon: '📢', title: 'MARKETING', subtitle: 'Marketing Manager', worker: {name: 'Marketing Manager', role: 'Campaigns', model: 'dolphin-llama3:8b', personality: 'Creative, energetic'}}
+];
+
+let currentWorker = null;
+let recognition = null;
+let listening = false;
+
+function login(e) {
+  e.preventDefault();
+  if (document.getElementById('email').value === AUTH.email && document.getElementById('pass').value === AUTH.pass) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    renderBuilding();
+    initVoice();
+  } else {
+    document.getElementById('error').style.display = 'block';
+  }
+}
+
+function logout() { location.reload(); }
+
+function renderBuilding() {
+  document.getElementById('building').innerHTML = FLOORS.map(f => `
+    <div class="floor" onclick='selectFloor(${JSON.stringify(f.worker)})'>
+      <div class="floor-face floor-front">
+        <div class="floor-content">
+          <div class="floor-icon">${f.icon}</div>
+          <div class="floor-info">
+            <h3>${f.title}</h3>
+            <p>${f.subtitle}</p>
+            <span class="voice-badge">🎤 Voice Ready</span>
+          </div>
+        </div>
+      </div>
+      <div class="floor-face floor-top"></div>
+      <div class="floor-face floor-right"></div>
+    </div>
+  `).join('');
+}
+
+function selectFloor(worker) {
+  currentWorker = worker;
+  speak(`${worker.name} here. How can I help?`);
+}
+
+function initVoice() {
+  if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-GB';
+    recognition.continuous = false;
+    recognition.onresult = e => processVoice(e.results[0][0].transcript);
+    recognition.onend = () => {
+      listening = false;
+      document.getElementById('voiceBtn').classList.remove('listening');
+    };
+  }
+}
+
+function toggleVoice() {
+  if (!currentWorker) return speak('Select a floor first');
+  if (listening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+    listening = true;
+    document.getElementById('voiceBtn').classList.add('listening');
+    speak('Listening');
+  }
+}
+
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  speechSynthesis.speak(u);
+}
+
+async function processVoice(text) {
+  if (!currentWorker) return;
+  speak('Processing');
+  try {
+    const res = await fetch(`${OLLAMA}/api/generate`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: currentWorker.model,
+        prompt: `You are ${currentWorker.name}, ${currentWorker.role}. ${currentWorker.personality}. User said: "${text}". Respond in 2-3 sentences.`,
+        stream: false
+      })
+    });
+    const data = await res.json();
+    speak(data.response);
+    setTimeout(() => {
+      if (recognition) {
+        recognition.start();
+        listening = true;
+        document.getElementById('voiceBtn').classList.add('listening');
+      }
+    }, 3000);
+  } catch (err) {
+    speak('Connection error');
+  }
+}
+</script>
+
+</body>
+</html>
