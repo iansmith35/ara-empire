@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISHE Office OS</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js/+esm",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0F172A;color:#F1F5F9;overflow:hidden}
+.login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0F172A;z-index:1000}
+.login.hidden{display:none}
+.login-box{background:rgba(30,41,59,0.9);backdrop-filter:blur(20px);border:1px solid rgba(59,130,246,0.3);border-radius:16px;padding:2.5rem;width:400px}
+.login-title{font-size:1.75rem;font-weight:700;text-align:center;margin-bottom:0.5rem;background:linear-gradient(135deg,#3B82F6,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-subtitle{text-align:center;color:#94A3B8;font-size:0.875rem;margin-bottom:2rem}
+.input-group{margin-bottom:1.25rem}
+.input-label{display:block;font-size:0.875rem;font-weight:500;margin-bottom:0.5rem}
+.input-field{width:100%;padding:0.75rem 1rem;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#F1F5F9;font-size:0.938rem}
+.input-field:focus{outline:none;border-color:#3B82F6}
+.login-btn{width:100%;padding:0.875rem;background:#3B82F6;border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer}
+.login-btn:hover{background:#2563EB}
+.error{margin-top:1rem;padding:0.75rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#FCA5A5;font-size:0.875rem;text-align:center;display:none}
+.app{display:none}
+.app.active{display:block}
+#canvas-container{position:fixed;inset:0}
+.ui-overlay{position:fixed;inset:0;pointer-events:none;z-index:10}
+.header{position:absolute;top:2rem;left:2rem;right:2rem;display:flex;justify-content:space-between;align-items:center;pointer-events:auto}
+.logo{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#3B82F6,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logout{padding:0.5rem 1.25rem;background:transparent;border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#FCA5A5;cursor:pointer;font-size:0.875rem}
+.workers{position:absolute;bottom:2rem;left:2rem;display:flex;gap:1rem;pointer-events:auto}
+.worker{padding:1rem 1.5rem;background:rgba(30,41,59,0.9);backdrop-filter:blur(20px);border:1px solid rgba(59,130,246,0.3);border-radius:12px;cursor:pointer;transition:all 0.2s}
+.worker:hover{border-color:#3B82F6;transform:translateY(-2px)}
+.worker.active{border-color:#3B82F6;background:rgba(59,130,246,0.2)}
+.worker-name{font-weight:600;margin-bottom:0.25rem}
+.worker-role{font-size:0.813rem;color:#94A3B8}
+.voice-status{position:absolute;bottom:2rem;right:2rem;padding:1rem 1.5rem;background:rgba(30,41,59,0.9);backdrop-filter:blur(20px);border:1px solid rgba(59,130,246,0.3);border-radius:12px;pointer-events:auto}
+.voice-btn{width:60px;height:60px;border-radius:50%;border:none;background:linear-gradient(135deg,#8B5CF6,#3B82F6);color:white;font-size:2rem;cursor:pointer;box-shadow:0 10px 30px rgba(59,130,246,0.4);transition:all 0.3s}
+.voice-btn:hover{transform:scale(1.1)}
+.voice-btn.listening{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 10px 30px rgba(59,130,246,0.4)}50%{box-shadow:0 15px 50px rgba(59,130,246,0.8)}}
+.loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0F172A;z-index:2000}
+.loading.hidden{display:none}
+.spinner{width:50px;height:50px;border:4px solid rgba(59,130,246,0.2);border-top-color:#3B82F6;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+</div>
+
+<div class="login" id="loginScreen">
+  <div class="login-box">
+    <h1 class="login-title">ISHE OFFICE OS</h1>
+    <p class="login-subtitle">3D Voice-Enabled Headquarters</p>
+    <form onsubmit="login(event)">
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input type="email" class="input-field" id="email" value="ian@ishe-ltd.co.uk">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <input type="password" class="input-field" id="pass" value="225Bs119Ej">
+      </div>
+      <button type="submit" class="login-btn">Enter Office</button>
+      <div class="error" id="error">Invalid credentials</div>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div id="canvas-container"></div>
+  
+  <div class="ui-overlay">
+    <div class="header">
+      <div class="logo">ISHE OFFICE OS</div>
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+    
+    <div class="workers" id="workers"></div>
+    
+    <div class="voice-status">
+      <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const AUTH = {email: 'ian@ishe-ltd.co.uk', pass: '225Bs119Ej'};
+const OLLAMA = 'http://37.27.48.177:11434';
+
+const WORKERS = [
+  {
+    id: 'geoff',
+    name: 'Geoff Hazel',
+    role: 'IT Manager',
+    model: 'qwen2.5-coder:7b',
+    personality: 'Technical expert, monitors systems 24/7',
+    voice: 'en-GB-Standard-B',
+    avatar: 'https://models.readyplayer.me/67a1234567890abcd.glb', // Male avatar
+    position: {x: -3, y: 0, z: 0}
+  },
+  {
+    id: 'phil',
+    name: 'Phil Jones',
+    role: 'Finance Manager',
+    model: 'qwen2.5-coder:7b',
+    personality: 'Methodical accountant, detail-oriented',
+    voice: 'en-GB-Standard-D',
+    avatar: 'https://models.readyplayer.me/67b1234567890abcd.glb', // Male avatar
+    position: {x: -1, y: 0, z: 0}
+  },
+  {
+    id: 'ops',
+    name: 'Sarah Chen',
+    role: 'Operations Manager',
+    model: 'llama3.2:3b',
+    personality: 'Efficient, organized',
+    voice: 'en-GB-Standard-A',
+    avatar: 'https://models.readyplayer.me/67c1234567890abcd.glb', // Female avatar
+    position: {x: 1, y: 0, z: 0}
+  },
+  {
+    id: 'marketing',
+    name: 'James Taylor',
+    role: 'Marketing Manager',
+    model: 'dolphin-llama3:8b',
+    personality: 'Creative, energetic',
+    voice: 'en-GB-Standard-B',
+    avatar: 'https://models.readyplayer.me/67d1234567890abcd.glb', // Male avatar
+    position: {x: 3, y: 0, z: 0}
+  }
+];
+
+let scene, camera, renderer, controls;
+let currentWorker = null;
+let recognition = null;
+let listening = false;
+let avatars = {};
+
+window.login = function(e) {
+  e.preventDefault();
+  if (document.getElementById('email').value === AUTH.email && 
+      document.getElementById('pass').value === AUTH.pass) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    init3D();
+  } else {
+    document.getElementById('error').style.display = 'block';
+  }
+};
+
+window.logout = function() { location.reload(); };
+
+function init3D() {
+  const container = document.getElementById('canvas-container');
+  
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0F172A);
+  scene.fog = new THREE.Fog(0x0F172A, 10, 50);
+  
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 1.6, 5);
+  
+  renderer = new THREE.WebGLRenderer({antialias: true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+  
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.maxPolarAngle = Math.PI / 2;
+  
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x404040, 2);
+  scene.add(ambientLight);
+  
+  const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+  mainLight.position.set(5, 10, 5);
+  mainLight.castShadow = true;
+  scene.add(mainLight);
+  
+  const fillLight = new THREE.DirectionalLight(0x3B82F6, 0.5);
+  fillLight.position.set(-5, 5, -5);
+  scene.add(fillLight);
+  
+  // Floor
+  const floorGeometry = new THREE.PlaneGeometry(20, 20);
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1E293B,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+  
+  // Load avatars (using simple cubes as placeholders)
+  WORKERS.forEach(worker => {
+    const geometry = new THREE.BoxGeometry(0.5, 1.8, 0.5);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x3B82F6,
+      roughness: 0.5,
+      metalness: 0.5
+    });
+    const avatar = new THREE.Mesh(geometry, material);
+    avatar.position.set(worker.position.x, 0.9, worker.position.z);
+    avatar.castShadow = true;
+    avatar.userData = worker;
+    scene.add(avatar);
+    avatars[worker.id] = avatar;
+  });
+  
+  renderWorkerUI();
+  initVoice();
+  animate();
+  
+  document.getElementById('loading').classList.add('hidden');
+  
+  window.addEventListener('resize', onWindowResize);
+}
+
+function renderWorkerUI() {
+  const container = document.getElementById('workers');
+  container.innerHTML = WORKERS.map(w => `
+    <div class="worker" onclick="selectWorker('${w.id}')">
+      <div class="worker-name">${w.name}</div>
+      <div class="worker-role">${w.role}</div>
+    </div>
+  `).join('');
+}
+
+window.selectWorker = function(id) {
+  currentWorker = WORKERS.find(w => w.id === id);
+  document.querySelectorAll('.worker').forEach(el => el.classList.remove('active'));
+  event.target.closest('.worker').classList.add('active');
+  
+  // Focus camera on avatar
+  const avatar = avatars[id];
+  const targetPos = new THREE.Vector3();
+  avatar.getWorldPosition(targetPos);
+  camera.lookAt(targetPos);
+  
+  speak(`${currentWorker.name} here. How can I help you, Ian?`);
+};
+
+function initVoice() {
+  if ('webkitSpeechRecognition' in window) {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-GB';
+    recognition.continuous = false;
+    recognition.onresult = e => processVoice(e.results[0][0].transcript);
+    recognition.onend = () => {
+      listening = false;
+      document.getElementById('voiceBtn').classList.remove('listening');
+    };
+  }
+}
+
+window.toggleVoice = function() {
+  if (!currentWorker) return speak('Please select a worker first');
+  if (listening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+    listening = true;
+    document.getElementById('voiceBtn').classList.add('listening');
+  }
+};
+
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-GB';
+  u.rate = 1.0;
+  speechSynthesis.speak(u);
+}
+
+async function processVoice(text) {
+  if (!currentWorker) return;
+  speak('Processing your request');
+  
+  try {
+    const res = await fetch(`${OLLAMA}/api/generate`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: currentWorker.model,
+        prompt: `You are ${currentWorker.name}, ${currentWorker.role}. ${currentWorker.personality}. User (Ian, CEO) said: "${text}". Respond professionally in 2-3 sentences.`,
+        stream: false
+      })
+    });
+    const data = await res.json();
+    speak(data.response);
+    
+    setTimeout(() => {
+      if (recognition) {
+        recognition.start();
+        listening = true;
+        document.getElementById('voiceBtn').classList.add('listening');
+      }
+    }, 3000);
+  } catch (err) {
+    speak('Connection error');
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+</script>
+
+</body>
+</html>
